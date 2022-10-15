@@ -31,9 +31,9 @@ Everyone that sends me pictures and videos of your flying creations! -Nick
 //========================================================================================================================//
 
 //Uncomment only one receiver type
-#define USE_PWM_RX
+//#define USE_PWM_RX
 //#define USE_PPM_RX
-//#define USE_SBUS_RX
+#define USE_SBUS_RX
 //#define USE_DSM_RX
 static const uint8_t num_DSM_channels = 6; //If using DSM RX, change this to match the number of transmitter channels you have
 
@@ -168,12 +168,12 @@ float MagScaleY = 1.0;
 float MagScaleZ = 1.0;
 
 //IMU calibration parameters - calibrate IMU using calculate_IMU_error() in the void setup() to get these values, then comment out calculate_IMU_error()
-float AccErrorX = 0.0;
-float AccErrorY = 0.0;
-float AccErrorZ = 0.0;
-float GyroErrorX = 0.0;
-float GyroErrorY= 0.0;
-float GyroErrorZ = 0.0;
+float AccErrorX = 0.02;
+float AccErrorY = -0.02;
+float AccErrorZ = 0.26;
+float GyroErrorX = -3.92;
+float GyroErrorY = 1.16;
+float GyroErrorZ = -0.56;
 
 //Controller parameters (take note of defaults before modifying!): 
 float i_limit = 25.0;     //Integrator saturation level, mostly for safety (default 25.0)
@@ -218,12 +218,12 @@ const int ch5Pin = 21; //gear (throttle cut)
 const int ch6Pin = 22; //aux1 (free aux channel)
 const int PPM_Pin = 23;
 //OneShot125 ESC pin outputs:
-const int m1Pin = 0;
-const int m2Pin = 1;
-const int m3Pin = 2;
-const int m4Pin = 3;
-const int m5Pin = 4;
-const int m6Pin = 5;
+const int m1Pin = 23;
+const int m2Pin = 2;
+const int m3Pin = 3;
+const int m4Pin = 4;
+const int m5Pin = 5;
+const int m6Pin = 6;
 //PWM servo or ESC outputs:
 const int servo1Pin = 6;
 const int servo2Pin = 7;
@@ -260,7 +260,7 @@ unsigned long channel_1_pwm, channel_2_pwm, channel_3_pwm, channel_4_pwm, channe
 unsigned long channel_1_pwm_prev, channel_2_pwm_prev, channel_3_pwm_prev, channel_4_pwm_prev;
 
 #if defined USE_SBUS_RX
-  SBUS sbus(Serial5);
+  SBUS sbus(Serial1);
   uint16_t sbusChannels[16];
   bool sbusFailSafe;
   bool sbusLostFrame;
@@ -314,15 +314,15 @@ void setup() {
   pinMode(m2Pin, OUTPUT);
   pinMode(m3Pin, OUTPUT);
   pinMode(m4Pin, OUTPUT);
-  pinMode(m5Pin, OUTPUT);
-  pinMode(m6Pin, OUTPUT);
-  servo1.attach(servo1Pin, 900, 2100); //Pin, min PWM value, max PWM value
-  servo2.attach(servo2Pin, 900, 2100);
-  servo3.attach(servo3Pin, 900, 2100);
-  servo4.attach(servo4Pin, 900, 2100);
-  servo5.attach(servo5Pin, 900, 2100);
-  servo6.attach(servo6Pin, 900, 2100);
-  servo7.attach(servo7Pin, 900, 2100);
+  //pinMode(m5Pin, OUTPUT);
+  //pinMode(m6Pin, OUTPUT);
+  //servo1.attach(servo1Pin, 900, 2100); //Pin, min PWM value, max PWM value
+  //servo2.attach(servo2Pin, 900, 2100);
+  //servo3.attach(servo3Pin, 900, 2100);
+  //servo4.attach(servo4Pin, 900, 2100);
+  //servo5.attach(servo5Pin, 900, 2100);
+  //servo6.attach(servo6Pin, 900, 2100);
+  //servo7.attach(servo7Pin, 900, 2100);
 
   //Set built in LED to turn on to signal startup
   digitalWrite(13, HIGH);
@@ -388,7 +388,7 @@ void setup() {
 void loop() {
   //Keep track of what time it is and how much time has elapsed since the last loop
   prev_time = current_time;      
-  current_time = micros();      
+  current_time = micros();
   dt = (current_time - prev_time)/1000000.0;
 
   loopBlink(); //Indicate we are in main loop with short blink every 1.5 seconds
@@ -1438,7 +1438,7 @@ void throttleCut() {
    * called before commandMotors() is called so that the last thing checked is if the user is giving permission to command
    * the motors to anything other than minimum value. Safety first. 
    */
-  if (channel_5_pwm > 1500) {
+  if (channel_5_pwm < 1400) {
     m1_command_PWM = 120;
     m2_command_PWM = 120;
     m3_command_PWM = 120;
