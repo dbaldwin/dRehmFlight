@@ -168,12 +168,12 @@ float MagScaleY = 1.0;
 float MagScaleZ = 1.0;
 
 //IMU calibration parameters - calibrate IMU using calculate_IMU_error() in the void setup() to get these values, then comment out calculate_IMU_error()
-float AccErrorX = 0.0;
-float AccErrorY = 0.0;
-float AccErrorZ = 0.0;
-float GyroErrorX = 0.0;
-float GyroErrorY= 0.0;
-float GyroErrorZ = 0.0;
+float AccErrorX = 0.02;
+float AccErrorY = -0.00;
+float AccErrorZ = -0.02;
+float GyroErrorX = 1.96;
+float GyroErrorY = -0.24;
+float GyroErrorZ = -0.63;
 
 //Controller parameters (take note of defaults before modifying!): 
 float i_limit = 25.0;     //Integrator saturation level, mostly for safety (default 25.0)
@@ -436,7 +436,7 @@ void loop() {
     
   //Get vehicle commands for next loop iteration
   getCommands(); //Pulls current available radio commands
-  failSafe(); //Prevent failures in event of bad receiver connection, defaults to failsafe values assigned in setup
+  //failSafe(); //Prevent failures in event of bad receiver connection, defaults to failsafe values assigned in setup
 
   //Regulate loop rate
   loopRate(2000); //Do not exceed 2000Hz, all filter parameters tuned to 2000Hz by default
@@ -468,15 +468,16 @@ void controlMixer() {
    */
    
   //Quad mixing - EXAMPLE
-  m1_command_scaled = thro_des - pitch_PID + roll_PID + yaw_PID; //Front left
-  m2_command_scaled = thro_des - pitch_PID - roll_PID - yaw_PID; //Front right
-  m3_command_scaled = thro_des + pitch_PID - roll_PID + yaw_PID; //Back Right
-  m4_command_scaled = thro_des + pitch_PID + roll_PID - yaw_PID; //Back Right
+  m1_command_scaled = thro_des + pitch_PID; //Rear
+  m2_command_scaled = thro_des - pitch_PID + roll_PID; //Left
+  m3_command_scaled = thro_des - pitch_PID - roll_PID; //Right
+  m4_command_scaled = 0; //Back Right
   m5_command_scaled = 0;
   m6_command_scaled = 0;
 
   //0.5 is centered servo, 0.0 is zero throttle if connecting to ESC for conventional PWM, 1.0 is max throttle
-  s1_command_scaled = 0;
+  float yaw_servo_trim = 0.5;
+  s1_command_scaled = yaw_servo_trim - yaw_PID;
   s2_command_scaled = 0;
   s3_command_scaled = 0;
   s4_command_scaled = 0;
@@ -1438,7 +1439,7 @@ void throttleCut() {
    * called before commandMotors() is called so that the last thing checked is if the user is giving permission to command
    * the motors to anything other than minimum value. Safety first. 
    */
-  if (channel_5_pwm > 1500) {
+  if (channel_5_pwm < 1500) {
     m1_command_PWM = 120;
     m2_command_PWM = 120;
     m3_command_PWM = 120;
